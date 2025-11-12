@@ -14,6 +14,11 @@ function App() {
   const backendUrl = useMemo(() => getBackendUrl(), []);
   const [toast, setToast] = useState(null);
 
+  // Developer/diagnostic state for top scores fetch on game over
+  const [topScores, setTopScores] = useState(null);
+  const [topScoresLoading, setTopScoresLoading] = useState(false);
+  const [topScoresError, setTopScoresError] = useState(null);
+
   const {
     status, // idle | running | paused | ended
     score,
@@ -67,6 +72,40 @@ function App() {
     postScore();
     return () => { didCancel = true; };
   }, [status, score, backendUrl]);
+
+  // Helper to fetch top scores (non-blocking, optional)
+  const fetchTopScores = async () => {
+    if (!backendUrl) return;
+    setTopScores(null);
+    setTopScoresError(null);
+    setTopScoresLoading(true);
+    try {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch(`${backendUrl}/api/scores/top?limit=10`, {
+        method: 'GET',
+        signal: controller.signal
+      });
+      clearTimeout(t);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      // Expect an array of score objects; be permissive
+      setTopScores(Array.isArray(data) ? data : (data?.scores ?? []));
+    } catch (e) {
+      setTopScoresError((e && e.message) || 'Failed to fetch top scores');
+    } finally {
+      setTopScoresLoading(false);
+    }
+  };
+
+  // Reset top scores panel when leaving game-over
+  useEffect(() => {
+    if (status !== 'ended') {
+      setTopScores(null);
+      setTopScoresError(null);
+      setTopScoresLoading(false);
+    }
+  }, [status]);
 
   return (
     <div className="app-shell">
@@ -168,18 +207,53 @@ function App() {
                 <p className="overlay-sub">
                   Final score: <strong>{score}</strong> • High score: <strong>{highScore}</strong>
                 </p>
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
                   <button className="btn" onClick={startGame} autoFocus aria-label="Play again (Enter)">
                     Play Again
                   </button>
                   <button className="btn ghost" onClick={resetGame} aria-label="Reset to start screen">
                     Reset
                   </button>
+                  {!!backendUrl && (
+                    <button
+                      className="btn secondary"
+                      onClick={fetchTopScores}
+                      aria-label="Fetch top scores from server"
+                      disabled={topScoresLoading}
+                      title="Fetch top scores"
+                    >
+                      {topScoresLoading ? 'Loading…' : 'View Top Scores'}
+                    </button>
+                  )}
                 </div>
                 {!!backendUrl && (
-                  <p className="overlay-sub" style={{ marginTop: 12, fontSize: 12 }}>
-                    Scores are sent to: {backendUrl.replace(/^https?:\/\//, '')}
-                  </p>
+                  <>
+                    <p className="overlay-sub" style={{ marginTop: 12, fontSize: 12 }}>
+                      Scores are sent to: {backendUrl.replace(/^https?:\/\//, '')}
+                    </p>
+                    {topScoresError && (
+                      <p className="overlay-sub" style={{ color: '#EF4444', fontSize: 12 }}>
+                        Top scores error: {topScoresError}
+                      </p>
+                    )}
+                    {Array.isArray(topScores) && topScores.length > 0 && (
+                      <div style={{ marginTop: 10, textAlign: 'left' }} aria-label="Top scores list">
+                        <strong>Top Scores</strong>
+                        <ol style={{ marginTop: 6 }}>
+                          {topScores.map((s, i) => (
+                            <li key={i}>
+                              {typeof s === 'number' ? s : (s?.score ?? JSON.stringify(s))}
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+                    {Array.isArray(topScores) && topScores.length === 0 && !topScoresLoading && !topScoresError && (
+                      <p className="overlay-sub" style={{ fontSize: 12 }}>
+                        No scores found yet.
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </div>
