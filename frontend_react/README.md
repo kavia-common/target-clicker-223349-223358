@@ -1,82 +1,66 @@
-# Lightweight React Template for KAVIA
+# Click Quest — React Frontend
 
-This project provides a minimal React template with a clean, modern UI and minimal dependencies.
+Click Quest is a lightweight browser game built with React. Click moving targets to score as many points as possible before time runs out.
 
-## Features
+## Quickstart
 
-- **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React
-- **Modern UI**: Clean, responsive design with KAVIA brand styling
-- **Fast**: Minimal dependencies for quick loading times
-- **Simple**: Easy to understand and modify
+- Install: npm install
+- Run dev: npm start
+- Tests: npm test
+- Build: npm run build
 
-## Getting Started
+App runs at http://localhost:3000 by default.
 
-In the project directory, you can run:
+## Gameplay
 
-### `npm start`
+- Default round length: 30 seconds
+- Click targets: +1 point
+- Bonus targets (amber): +2 points
+- High score is saved locally in your browser
+- Keyboard shortcuts:
+  - Enter: Start / Restart
+  - Space: Pause / Resume
+- Accessibility: Targets are real buttons with aria-labels and visible focus rings; prefers-reduced-motion is respected.
 
-Runs the app in development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Environment
 
-### `npm test`
+This app reads optional environment variables at build time:
 
-Launches the test runner in interactive watch mode.
+- REACT_APP_BACKEND_URL: Best-effort backend base URL for score submission (e.g., http://localhost:3001). If not set, the app derives the URL from the current host with port 3001.
+- REACT_APP_API_BASE: Alternative alias for backend base URL.
+- REACT_APP_FEATURE_FLAGS: JSON string to toggle features. Example:
+  {"dynamicSpawn": true}
 
-### `npm run build`
+If a backend URL is available, on game over the app will POST to:
+POST {BACKEND_URL}/api/scores
+Body: { "score": number }
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Timeout: 3 seconds. Failures are ignored; UI never blocks.
 
-## Customization
+## Feature Flags
 
-### Colors
+- dynamicSpawn (boolean, default: true): When enabled, targets spawn faster over time to increase difficulty.
 
-The main brand colors are defined as CSS variables in `src/App.css`:
+## Theming
 
-```css
-:root {
-  --kavia-orange: #E87A41;
-  --kavia-dark: #1A1A1A;
-  --text-color: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --border-color: rgba(255, 255, 255, 0.1);
-}
-```
+The app follows the Ocean Professional theme:
+- Primary: #2563EB
+- Accent/Success: #F59E0B
+- Error: #EF4444
+- Background: #f9fafb
+- Surface: #ffffff
+- Text: #111827
 
-### Components
+Styles live in src/index.css and src/App.css.
 
-This template uses pure HTML/CSS components instead of a UI framework. You can find component styles in `src/App.css`. 
+## Project Structure
 
-Common components include:
-- Buttons (`.btn`, `.btn-large`)
-- Container (`.container`)
-- Navigation (`.navbar`)
-- Typography (`.title`, `.subtitle`, `.description`)
+- src/App.js: Root app & overlays
+- src/game/useGameEngine.js: Core game state and loops
+- src/game/TargetField.js: Field and targets
+- src/game/Timer.js: Timer pill
+- src/game/Scoreboard.js: Scores
+- src/game/Controls.js: Buttons (reusable)
+- src/utils/env.js: Env helpers
 
-## Learn More
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+No additional runtime dependencies beyond React.
