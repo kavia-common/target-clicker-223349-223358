@@ -22,12 +22,14 @@ export default function TargetField({ status, targets, onHit, prefersReducedMoti
     return () => window.removeEventListener('resize', computeBounds);
   }, [computeBounds]);
 
+  const isPaused = status === 'paused';
   return (
     <div
       ref={fieldRef}
-      className="field"
+      className={`field ${isPaused ? 'is-paused' : ''}`}
       role="application"
       aria-label="Target field"
+      data-pause-indicator={isPaused ? 'Paused' : ''}
     >
       {targets.map(t => {
         // ensure within bounds with padding
